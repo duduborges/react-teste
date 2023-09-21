@@ -1,104 +1,89 @@
-import "./App.css"
-import logoImg from "./assets/logo.png"
-import { useState, FormEvent} from 'react'
+
+import { useState, useEffect } from "react";
 
 
-  function App(){
+export default function App() {
+  const [input, setInput] = useState("")
+  const [tasks, setTasks] = useState<string[]>([]);
+  const [editTask, SetEditTask] = useState({
+    enable: false,
+    task: ""
+  })
 
-    interface infoProps{
-      title: string;
-      gasolina : string | number
-      alcool : string| number 
+  useEffect(() => {
+    const tarefasSalvas = localStorage.getItem("Anotações")
+    if (tarefasSalvas) {
+      setTasks(JSON.parse(tarefasSalvas));
+    }
+  }, [])
+
+
+
+  function handleRegister() {
+    if (!input) {
+      alert("Invalido! Não tem nada escrito no campo.")
+      return
+    }
+    if (editTask.enable) {
+      handleSaveEdit();
+      return
     }
 
+    setTasks(tarefas => [...tarefas, input]);
+    setInput("")
+    localStorage.setItem("Anotações", JSON.stringify([...tasks, input]))
 
-    const [alcoolInput, setAlcoolInput] = useState(0)
-    const [gasolinaInput, setGasolinaInput] = useState(0)
-    const [info, setInfo] = useState<infoProps>()
+  }
+  function handleSaveEdit() {
+    const findIndexTask = tasks.findIndex(task => task === editTask.task)
+    const allTasks = [...tasks];
 
-    function Calcular(event: FormEvent){
-      event.preventDefault()
-      let calculo = alcoolInput/gasolinaInput
+    allTasks[findIndexTask] = input
+    setTasks(allTasks)
+    SetEditTask({
+      enable: false,
+      task: ""
+    })
+    setInput("")
+    localStorage.setItem("Anotações", JSON.stringify(allTasks))
 
-      if(calculo <= 0.7){
-        setInfo({
-          title: "Compensa usar Álcool",  
-          gasolina: fomatarMoeda(gasolinaInput),
-          alcool: fomatarMoeda(alcoolInput)
-        })
-      }else{
-        setInfo({
-          title: "Compensa usar Álcool",  
-          gasolina: fomatarMoeda(gasolinaInput),
-          alcool: fomatarMoeda(alcoolInput)
-        })
-      }
-      
-    }
+  }
+  function handleDelete(item: string) {
+    const removeTask = tasks.filter(task => task !== item)
+    setTasks(removeTask)
+    localStorage.setItem("Anotações", JSON.stringify(removeTask))
 
-      function fomatarMoeda(valor: number){
-        let valorFormatado = valor.toLocaleString(
-          'pt-BR', {
-             style: 'currency', 
-             currency: 'BRL' 
-            })
+  }
+  function handleEdit(item: string) {
+    setInput(item)
+    SetEditTask({
+      enable: true,
+      task: item
+    })
+  }
 
-        return valorFormatado
-      }
-
-  return(
+  return (
     <div>
-      <main className="container">
-        <img 
-        src={logoImg} 
-        className="logo" 
-        />
-        <h1 className="title">Qual melhor opção para abastecer?</h1>
-        <form className="form" onSubmit={Calcular}>
-          <label >Alcool (Preço por litro): </label>
-          <input 
-          className="input"
-          type="number" 
-          placeholder="  R$"
-          min="1"
-          step="0.01"
-          required
-          value={alcoolInput}
-          onChange={
-            (e) => setAlcoolInput(Number(e.target.value))}
-          />
-        </form>
-        <form className="form" onSubmit={Calcular}>
-          <label >Gasolina (Preço por litro): </label>
-          <input 
-          className="input"
-          type="number" 
-          placeholder="  R$"
-          min="1"
-          step="0.01"
-          required
-          value={gasolinaInput}
-          onChange={
-            (e) => setGasolinaInput(Number(e.target.value))
-          }
+      <h1>Listinha de tarefas</h1>
+      <input
+        type="text" id="" placeholder="Digite uma tarefa aqui: " value={input} onChange={
+          (e) => setInput(e.target.value)
+        } /> <br /><br />
+      <button onClick={handleRegister}> {editTask.enable ? "Atualizar tarefa" : "Adicionar tarefa"}</button><br /><br />
 
-          />
-          <input type="submit" className="button" value="Calcular" />
-        </form>
-        {info && Object.keys(info).length > 0 && (
-          <section className="result">
-          <h2 className="result-title">
-            {info.title}
-          </h2>
-          <span> Álcool: {info.alcool}</span>
-          <span> Gasolina: {info.gasolina}</span>
 
+      {tasks.map((item, index) => (
+        <section>
+          <button onClick={() => handleEdit(item)}>Editar</button>
+          <span>
+            {item}
+          </span>
+
+          <button onClick={() => handleDelete(item)}>
+            Excluir
+          </button>
         </section>
-        )}
-        
-      </main>
+      ))}
     </div>
-  )
-
+  );
 }
-export default App
